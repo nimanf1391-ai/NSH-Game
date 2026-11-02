@@ -1,0 +1,584 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NSH.Game | دنیای بازی‌ها</title>
+<meta name="description" content="به دنیای بازی‌های NSH.Game خوش آمدید">
+
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+  --bg:#090d19;
+  --panel:#11182a;
+  --panel2:#151e33;
+  --text:#f4f6ff;
+  --muted:#9ba7c2;
+  --line:rgba(255,255,255,.09);
+  --primary:#8168ff;
+  --cyan:#39d9ee;
+  --pink:#ff5eaa;
+  --shadow:0 18px 55px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Vazirmatn,Tahoma,sans-serif;
+}
+button,input{font:inherit}
+button,a{-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+.container{width:min(1160px,92%);margin:auto}
+
+/* Header */
+header{
+  position:sticky;top:0;z-index:50;
+  background:rgba(9,13,25,.88);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--line);
+}
+.header-inner{
+  height:78px;display:flex;align-items:center;
+  justify-content:space-between;gap:20px;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{
+  width:48px;height:48px;border-radius:16px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#8066ff,#37d9ed);
+  box-shadow:0 7px 25px rgba(112,95,255,.3);
+  position:relative;overflow:hidden;
+}
+.logo svg{width:31px;height:31px}
+.brand-name{font-size:21px;font-weight:900;letter-spacing:-.7px}
+.brand-name span{color:var(--cyan)}
+.brand-caption{font-size:10px;color:var(--muted);margin-top:-2px}
+.nav{display:flex;align-items:center;gap:5px}
+.nav a{
+  padding:10px 13px;border-radius:11px;
+  color:var(--muted);font-size:13px;transition:.2s;
+}
+.nav a:hover,.nav a.active{background:rgba(129,104,255,.14);color:#b9adff}
+.header-actions{display:flex;align-items:center;gap:9px}
+.small-btn{
+  background:var(--panel);border:1px solid var(--line);
+  color:var(--text);border-radius:11px;padding:10px 13px;
+}
+.login-btn{
+  background:linear-gradient(110deg,var(--primary),#5b8cff);
+  color:white;border:0;border-radius:11px;
+  padding:11px 17px;font-weight:700;
+}
+.menu-btn{display:none}
+
+/* Hero */
+.hero{padding:65px 0 42px;position:relative;overflow:hidden}
+.hero:before{
+  content:"";position:absolute;width:520px;height:520px;
+  border-radius:50%;background:#654bff;
+  filter:blur(150px);opacity:.16;
+  top:-220px;right:-150px;pointer-events:none;
+}
+.hero:after{
+  content:"";position:absolute;width:380px;height:380px;
+  border-radius:50%;background:#1ecde8;
+  filter:blur(150px);opacity:.10;
+  bottom:-250px;left:-100px;pointer-events:none;
+}
+.hero-grid{
+  display:grid;grid-template-columns:1.05fr .95fr;
+  gap:45px;align-items:center;position:relative;z-index:1;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid rgba(129,104,255,.35);
+  background:rgba(129,104,255,.1);
+  color:#c2b8ff;padding:8px 13px;border-radius:30px;
+  font-size:12px;margin-bottom:20px;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--cyan)}
+.hero h1{
+  font-size:clamp(35px,5.5vw,63px);
+  line-height:1.35;margin:0 0 17px;font-weight:900;
+  letter-spacing:-2px;
+}
+.hero h1 .gradient{
+  background:linear-gradient(90deg,#46dff0,#9b82ff,#ff73bd);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-desc{
+  color:var(--muted);line-height:2.1;
+  font-size:15px;max-width:540px;margin:0 0 25px;
+}
+.hero-buttons{display:flex;gap:12px;flex-wrap:wrap}
+.primary-btn,.secondary-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:9px;padding:14px 22px;border-radius:13px;
+  font-size:14px;font-weight:800;transition:.2s;
+}
+.primary-btn{
+  color:white;background:linear-gradient(110deg,#7961ff,#4f91ff);
+  box-shadow:0 10px 28px rgba(104,91,255,.25);
+}
+.secondary-btn{
+  background:var(--panel);border:1px solid var(--line);color:var(--text);
+}
+.primary-btn:hover,.secondary-btn:hover{transform:translateY(-3px)}
+.hero-note{font-size:11px;color:var(--muted);margin-top:22px}
+
+/* Hero artwork */
+.game-art{
+  min-height:350px;position:relative;
+  display:grid;place-items:center;
+}
+.art-glow{
+  width:270px;height:270px;border-radius:50%;
+  background:linear-gradient(135deg,#8168ff,#26d8e8);
+  filter:blur(55px);opacity:.32;position:absolute;
+}
+.console{
+  position:relative;width:min(390px,100%);height:290px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:28px;
+  background:linear-gradient(145deg,rgba(35,47,78,.92),rgba(14,20,38,.95));
+  box-shadow:0 30px 80px rgba(0,0,0,.4);
+  transform:rotate(-4deg);
+  display:grid;place-items:center;
+}
+.console:before{
+  content:"";position:absolute;inset:10px;
+  border:1px solid rgba(255,255,255,.07);border-radius:20px;
+}
+.console-icon{
+  font-size:110px;
+  filter:drop-shadow(0 15px 20px rgba(111,92,255,.5));
+}
+.floating{
+  position:absolute;background:#18233b;
+  border:1px solid rgba(255,255,255,.13);
+  padding:12px 16px;border-radius:15px;
+  box-shadow:var(--shadow);font-size:12px;
+}
+.float-one{top:22px;right:0}
+.float-two{bottom:22px;left:0}
+.float-three{bottom:15px;right:10px}
+
+/* Stats */
+.stats{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:13px;margin:22px 0 45px;
+}
+.stat{
+  background:var(--panel);border:1px solid var(--line);
+  padding:17px;border-radius:15px;text-align:center;
+}
+.stat strong{font-size:22px;display:block}
+.stat span{font-size:11px;color:var(--muted)}
+
+/* Sections */
+.section{padding:25px 0 35px}
+.section-head{
+  display:flex;justify-content:space-between;
+  align-items:end;gap:15px;margin-bottom:20px;
+}
+.section-title{font-size:22px;font-weight:900;margin:0}
+.section-sub{font-size:12px;color:var(--muted);margin-top:5px}
+.view-all{color:#a99aff;font-size:12px}
+.game-grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;
+}
+.game-card{
+  overflow:hidden;border-radius:17px;
+  border:1px solid var(--line);background:var(--panel);
+  transition:.25s;
+}
+.game-card:hover{
+  transform:translateY(-5px);
+  border-color:rgba(129,104,255,.5);
+  box-shadow:var(--shadow);
+}
+.game-thumb{
+  height:155px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#252b50,#172c43);
+  overflow:hidden;font-size:52px;
+}
+.game-thumb img{width:100%;height:100%;object-fit:cover}
+.game-content{padding:14px}
+.game-content h3{font-size:14px;margin:0 0 7px}
+.game-content p{
+  font-size:11px;line-height:1.9;color:var(--muted);
+  margin:0 0 13px;min-height:42px;
+}
+.play-link{
+  display:block;text-align:center;padding:10px;
+  background:rgba(129,104,255,.15);
+  color:#c4baff;border-radius:10px;font-size:12px;font-weight:800;
+}
+.play-link:hover{background:var(--primary);color:white}
+.empty{
+  grid-column:1/-1;text-align:center;
+  padding:35px 15px;color:var(--muted);
+  border:1px dashed var(--line);border-radius:15px;font-size:13px;
+}
+
+/* Categories */
+.category-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+}
+.category{
+  border:1px solid var(--line);background:var(--panel);
+  border-radius:15px;padding:20px;
+  transition:.2s;cursor:pointer;
+}
+.category:hover{background:var(--panel2);transform:translateY(-3px)}
+.category-icon{font-size:27px;margin-bottom:11px}
+.category strong{display:block;font-size:13px}
+.category small{color:var(--muted);font-size:11px}
+
+/* Search */
+.search-wrap{margin-bottom:18px}
+.search{
+  width:100%;padding:14px 17px;border-radius:13px;
+  border:1px solid var(--line);background:var(--panel);
+  color:var(--text);outline:none;
+}
+.search:focus{border-color:var(--primary)}
+
+/* Footer */
+footer{border-top:1px solid var(--line);margin-top:45px;padding:30px 0}
+.footer-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:15px;color:var(--muted);font-size:11px;
+}
+.footer-brand{font-weight:900;color:var(--text);font-size:15px}
+
+/* Modal */
+.modal{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(0,0,0,.72);display:none;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal.show{display:flex}
+.modal-box{
+  width:min(420px,100%);background:var(--panel);
+  border:1px solid var(--line);border-radius:20px;padding:25px;
+  box-shadow:var(--shadow);
+}
+.modal-top{display:flex;justify-content:space-between;align-items:center}
+.modal-top h2{font-size:19px;margin:0}
+.close-btn{background:none;border:0;color:var(--muted);font-size:23px}
+.modal-desc{font-size:12px;color:var(--muted);line-height:1.9}
+.field{margin:14px 0}
+.field label{display:block;font-size:12px;margin-bottom:7px}
+.field input{
+  width:100%;padding:12px;border-radius:11px;
+  border:1px solid var(--line);background:var(--bg);
+  color:var(--text);outline:none;
+}
+.field input:focus{border-color:var(--primary)}
+.modal-submit{
+  width:100%;padding:13px;border:0;border-radius:11px;
+  color:white;background:linear-gradient(100deg,#7961ff,#4e8fff);
+  font-weight:800;margin-top:8px;
+}
+.switch-auth{font-size:12px;color:var(--muted);text-align:center;margin-top:15px}
+.switch-auth button{background:none;border:0;color:#b6a8ff}
+#authMessage{font-size:12px;color:var(--cyan);line-height:1.8;margin-top:10px}
+
+/* Mobile */
+@media(max-width:850px){
+  .nav{display:none}
+  .menu-btn{display:block}
+  .hero-grid{grid-template-columns:1fr;gap:10px}
+  .hero{padding-top:43px}
+  .game-art{min-height:280px}
+  .console{height:230px;width:330px}
+  .console-icon{font-size:85px}
+  .game-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .category-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .brand-name{font-size:18px}
+  .logo{width:42px;height:42px}
+  .header-inner{height:68px}
+  .header-actions .login-btn{padding:10px}
+  .hero h1{letter-spacing:-1px}
+  .stats{gap:7px}
+  .stat{padding:13px 5px}
+  .stat strong{font-size:18px}
+  .game-thumb{height:120px}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="container header-inner">
+    <a href="#" class="brand" aria-label="NSH.Game">
+      <div class="logo">
+        <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <path d="M10 14.5C10.7 11.8 13 10 15.8 10H24.2C27 10 29.3 11.8 30 14.5L33 25.2C33.8 28.1 30.4 30.4 28 28.4L23.5 24.8H16.5L12 28.4C9.6 30.4 6.2 28.1 7 25.2L10 14.5Z" fill="white"/>
+          <path d="M14 16V22M11 19H17" stroke="#6756D9" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="25.5" cy="17.5" r="1.8" fill="#6756D9"/>
+          <circle cx="29" cy="21" r="1.8" fill="#6756D9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">NSH<span>.Game</span></div>
+        <div class="brand-caption">PLAY • DISCOVER • ENJOY</div>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <a href="#home" class="active">خانه</a>
+      <a href="#games">بازی‌ها</a>
+      <a href="#categories">دسته‌بندی‌ها</a>
+      <a href="#tools">ابزارها</a>
+      <a href="#about">درباره ما</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="small-btn" onclick="toggleTheme()" title="تغییر پوسته">☀️</button>
+      <button class="login-btn" onclick="openAuth()">ورود / عضویت</button>
+      <button class="small-btn menu-btn" onclick="document.getElementById('mobileNav').hidden=!document.getElementById('mobileNav').hidden">☰</button>
+    </div>
+  </div>
+  <div id="mobileNav" hidden style="padding:10px 4%;background:var(--panel)">
+    <div style="display:flex;flex-wrap:wrap;gap:15px;font-size:13px">
+      <a href="#home">خانه</a><a href="#games">بازی‌ها</a>
+      <a href="#categories">دسته‌بندی‌ها</a><a href="#tools">ابزارها</a>
+      <a href="#about">درباره ما</a>
+    </div>
+  </div>
+</header>
+
+<main id="home">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> به دنیای NSH.Game خوش آمدی</div>
+        <h1>بازی کن،<br><span class="gradient">کشف کن، لذت ببر!</span></h1>
+        <p class="hero-desc">
+          دنیایی از بازی‌های جذاب، سرگرمی‌های آنلاین و ابزارهای کاربردی.
+          هر چیزی که برای یک تجربه دیجیتال هیجان‌انگیز نیاز داری، اینجاست.
+        </p>
+        <div class="hero-buttons">
+          <a href="#games" class="primary-btn">🎮 شروع بازی‌ها</a>
+          <a href="#categories" class="secondary-btn">کاوش دسته‌بندی‌ها ←</a>
+        </div>
+        <div class="hero-note">✨ همیشه چیز تازه‌ای برای کشف کردن وجود دارد.</div>
+      </div>
+
+      <div class="game-art">
+        <div class="art-glow"></div>
+        <div class="console"><div class="console-icon">🎮</div></div>
+        <div class="floating float-one">⚡ بازی‌های جذاب</div>
+        <div class="floating float-two">🚀 تجربه‌ای متفاوت</div>
+        <div class="floating float-three">💎 NSH.Game</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><strong id="statGames">۰</strong><span>بازی منتشرشده</span></div>
+      <div class="stat"><strong>۲۴/۷</strong><span>دسترسی آنلاین</span></div>
+      <div class="stat"><strong>∞</strong><span>لحظه‌های سرگرمی</span></div>
+    </div>
+
+    <section class="section" id="games">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">🔥 بازی‌های منتخب</h2>
+          <div class="section-sub">بازی‌های منتشرشده در NSH.Game</div>
+        </div>
+        <a href="#allGamesSection" class="view-all">مشاهده همه ←</a>
+      </div>
+      <div id="featuredGames" class="game-grid">
+        <div class="empty">در حال بارگذاری بازی‌ها...</div>
+      </div>
+    </section>
+
+    <section class="section" id="allGamesSection">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">🎯 کتابخانه بازی‌ها</h2>
+          <div class="section-sub">بازی مورد علاقه‌ات را پیدا کن</div>
+        </div>
+      </div>
+      <div class="search-wrap">
+        <input class="search" id="gameSearch" placeholder="🔍 نام بازی یا توضیحات را جستجو کن..." oninput="filterGames()">
+      </div>
+      <div id="allGames" class="game-grid">
+        <div class="empty">در حال بارگذاری...</div>
+      </div>
+    </section>
+
+    <section class="section" id="categories">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">🧩 دسته‌بندی‌ها</h2>
+          <div class="section-sub">هر سلیقه‌ای، یک انتخاب</div>
+        </div>
+      </div>
+      <div id="categoryList" class="category-grid">
+        <div class="empty">در حال دریافت دسته‌بندی‌ها...</div>
+      </div>
+    </section>
+
+    <section class="section" id="tools">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">🛠 ابزارهای کاربردی</h2>
+          <div class="section-sub">امکانات بیشتر در راه است</div>
+        </div>
+      </div>
+      <div class="category-grid">
+        <div class="category"><div class="category-icon">🧮</div><strong>ابزار محاسباتی</strong><small>به‌زودی</small></div>
+        <div class="category"><div class="category-icon">🎨</div><strong>ابزارهای خلاقانه</strong><small>به‌زودی</small></div>
+        <div class="category"><div class="category-icon">🤖</div><strong>ابزارهای هوشمند</strong><small>به‌زودی</small></div>
+        <div class="category"><div class="category-icon">⚙️</div><strong>ابزارهای دیگر</strong><small>به‌زودی</small></div>
+      </div>
+    </section>
+
+    <section class="section" id="about">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">💜 درباره NSH.Game</h2>
+          <div class="section-sub">یک دنیای دیجیتال برای سرگرمی و کشف</div>
+        </div>
+      </div>
+      <p style="color:var(--muted);font-size:13px;line-height:2.3;max-width:800px">
+        NSH.Game فضایی برای جمع‌آوری و ارائه بازی‌ها و ابزارهای دیجیتال است.
+        ما تلاش می‌کنیم تجربه‌ای ساده، جذاب و قابل استفاده برای همه فراهم کنیم.
+      </p>
+    </section>
+
+    <div id="connectionStatus" style="font-size:11px;color:var(--muted);padding:10px 0">در حال اتصال...</div>
+  </div>
+</main>
+
+<footer>
+  <div class="container footer-inner">
+    <div class="footer-brand">🎮 NSH.Game</div>
+    <div>ساخته‌شده با ❤️ برای دوست‌داران بازی</div>
+    <div>© 2026 NSH.Game</div>
+  </div>
+</footer>
+
+<!-- Login and signup modal -->
+<div class="modal" id="authModal" onclick="if(event.target===this)closeAuth()">
+  <div class="modal-box">
+    <div class="modal-top">
+      <h2 id="authTitle">ورود به حساب کاربری</h2>
+      <button class="close-btn" onclick="closeAuth()">×</button>
+    </div>
+    <p class="modal-desc" id="authDesc">برای ورود، ایمیل و رمز عبورت را وارد کن.</p>
+    <form id="authForm">
+      <div class="field">
+        <label>ایمیل</label>
+        <input type="email" id="authEmail" required autocomplete="email" placeholder="name@example.com">
+      </div>
+      <div class="field">
+        <label>رمز عبور</label>
+        <input type="password" id="authPassword" required minlength="6" autocomplete="current-password" placeholder="حداقل ۶ کاراکتر">
+      </div>
+      <button class="modal-submit" id="authSubmit" type="submit">ورود</button>
+    </form>
+    <div id="authMessage"></div>
+    <div class="switch-auth">
+      حساب نداری؟
+      <button type="button" onclick="switchAuth()">ثبت‌نام کن</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://knuludqjykyijqfaolwu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_55TKXT3Eu20nq6SUzaDfOg_0R93DhLV";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let games = [];
+let categories = [];
+let authMode = "login";
+
+function safeText(value){
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function safeLink(value){
+  try{
+    const url = new URL(value, location.href);
+    if(url.protocol !== "https:" && url.protocol !== "http:") return "";
+    return url.href;
+  }catch{return "";}
+}
+
+function gameCard(game){
+  const title = safeText(game.title || "بازی بدون نام");
+  const description = safeText(game.description || "برای مشاهده و اجرای بازی کلیک کن.");
+  const imageUrl = game.thumbnail_url ? safeLink(game.thumbnail_url) : "";
+  const image = imageUrl
+    ? `<img src="${safeText(imageUrl)}" alt="${title}" loading="lazy">`
+    : "🎮";
+  const gameUrl = game.game_url ? safeLink(game.game_url) : "";
+
+  return `
+    <article class="game-card">
+      <div class="game-thumb">${image}</div>
+      <div class="game-content">
+        <h3>${title}</h3>
+        <p>${description}</p>
+        ${gameUrl
+          ? `<a class="play-link" href="${safeText(gameUrl)}" target="_blank" rel="noopener noreferrer">▶ اجرای بازی</a>`
+          : `<span class="play-link" style="opacity:.6">لینک بازی موجود نیست</span>`}
+      </div>
+    </article>`;
+}
+
+async function loadGames(){
+  const status = document.getElementById("connectionStatus");
+  try{
+    const {data,error} = await db
+      .from("games")
+      .select("id,title,description,thumbnail_url,game_url,game_type,category_id,categories(name)")
+      .eq("status","published")
+      .order("created_at",{ascending:false});
+
+    if(error) throw error;
+    games = data || [];
+    renderGames();
+    status.textContent = "✓ اتصال به پایگاه داده برقرار است";
+  }catch(error){
+    console.error(error);
+    status.textContent = "خطا در دریافت بازی‌ها؛ تنظیمات Supabase و دسترسی‌ها را بررسی کنید.";
+    document.getElementById("featuredGames").innerHTML =
+      '<div class="empty">بازی‌ها بارگذاری نشدند.</div>';
+    document.getElementById("allGames").innerHTML =
+      '<div class="empty">امکان نمایش بازی‌ها وجود ندارد.</div>';
+  }
+}
+
+function renderGames(){
+  const featured = games.slice(0,4);
+  document.getElementById("featuredGames").innerHTML =
+    featured.length ? featured.map(gameCard).join("") :
+    '<div class="empty">هنوز بازی منتشرشده‌ای وجود ندارد.</div>';
+
+  document.getElementById("allGames").innerHTML =
+    games.length ? games.map(gameCard).join("") :
+    '<div class="empty">هنوز بازی منتشرشده‌ای وجود ندارد.</div>';
+
+  documen
