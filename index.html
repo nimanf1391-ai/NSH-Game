@@ -1,0 +1,563 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NSH.Game | NSH.made</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+ --primary:#6757e8;--primary-dark:#5142cf;
+ --blue:#3988f7;--cyan:#20b9bd;
+ --bg:#f7f8fc;--surface:#fff;--text:#24243b;
+ --muted:#777b91;--border:#e9eaf2;
+ --soft:#f0efff;--success:#159b75;
+ --danger:#e45467;--shadow:0 8px 28px #25244a0c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;transition:.2s}
+button:hover{filter:brightness(.97);transform:translateY(-1px)}
+header{
+ height:70px;background:#fff;border-bottom:1px solid var(--border);
+ display:flex;align-items:center;justify-content:space-between;
+ padding:0 22px;position:sticky;top:0;z-index:20;
+ box-shadow:0 2px 12px #2222
+}
+.brand{font-size:23px;font-weight:900;color:var(--primary)}
+.brand span{color:var(--cyan)}
+button{border:0;border-radius:12px;padding:11px 17px}
+.primary{background:linear-gradient(120deg,var(--primary),var(--blue));color:white}
+.secondary{background:var(--soft);color:var(--primary)}
+.danger{background:#fff0f2;color:var(--danger)}
+.menu{background:var(--soft);color:var(--primary);font-size:21px}
+.layout{display:flex;min-height:calc(100vh - 70px)}
+.sidebar{
+ width:255px;background:white;border-left:1px solid var(--border);
+ padding:22px;position:fixed;right:0;top:70px;bottom:0;
+ z-index:30;transform:translateX(105%);transition:.25s;overflow:auto
+}
+.sidebar.open{transform:translateX(0)}
+.sidebar hr{border:0;border-top:1px solid var(--border);margin:20px 0}
+.sidebar button{
+ display:block;width:100%;text-align:right;margin:7px 0;
+ background:transparent;color:var(--text);padding:13px
+}
+.sidebar button:hover{background:var(--soft);color:var(--primary)}
+.shade{display:none;position:fixed;inset:70px 0 0;background:#17152c88;z-index:25}
+.shade.show{display:block}
+main{width:100%;padding:28px;max-width:1250px;margin:auto}
+.hero{
+ background:linear-gradient(115deg,#efedff,#e9f5ff 60%,#e6fbfa);
+ border:1px solid #e5e5fa;border-radius:25px;
+ padding:36px;margin-bottom:28px;position:relative;overflow:hidden
+}
+.hero:after{
+ content:"";position:absolute;width:190px;height:190px;border-radius:50%;
+ background:#fff8;left:30px;top:-80px
+}
+.hero h1{font-size:32px;color:#39316e;margin-top:0}
+.hero p{color:#666985;line-height:2}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:18px}
+.card,.panel{
+ background:var(--surface);border:1px solid var(--border);
+ border-radius:19px;padding:18px;box-shadow:var(--shadow)
+}
+.card{transition:.2s}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 30px #34316b16}
+.thumb{
+ height:145px;background:linear-gradient(135deg,#eeedff,#e5f7ff);
+ border-radius:14px;display:flex;align-items:center;
+ justify-content:center;font-size:48px;overflow:hidden
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.card h3{margin:14px 0 7px}
+.card p{color:var(--muted);font-size:13px;line-height:1.9;min-height:40px}
+.card small{color:var(--primary)}
+.page{display:none}.page.active{display:block}
+h2{color:#343252}
+input,textarea,select{
+ width:100%;padding:12px 13px;border:1px solid var(--border);
+ border-radius:11px;margin:7px 0 14px;background:#fff;color:var(--text);
+ outline:none
+}
+input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px #6757e819}
+input[type=file]{background:#fafaff;padding:10px}
+input[type=checkbox]{width:auto;margin:0 6px;accent-color:var(--primary)}
+textarea{min-height:100px;resize:vertical}
+label{font-size:13px;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/-1}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.notice{padding:13px;background:var(--soft);color:var(--primary);border-radius:12px;margin:12px 0;line-height:1.9}
+.file-name{font-size:12px;color:var(--success);margin:-8px 0 12px;min-height:16px}
+.admin-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding:13px 2px}
+.admin-item:last-child{border-bottom:0}
+.admin-item strong{font-size:14px}
+.tag{font-size:11px;background:#f0efff;color:var(--primary);padding:5px 9px;border-radius:20px}
+.modal{display:none;position:fixed;inset:0;background:#17152ccc;z-index:60;align-items:center;justify-content:center;padding:12px}
+.modal.show{display:flex}
+.modal-box{width:min(100%,1050px);height:min(90vh,720px);background:white;border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.modal-head{padding:13px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.modal-body{flex:1;min-height:0}
+.modal-body iframe{width:100%;height:100%;border:0}
+.toast{position:fixed;bottom:18px;left:18px;z-index:100;background:#292747;color:white;padding:14px 19px;border-radius:13px;display:none;max-width:90%;box-shadow:var(--shadow)}
+footer{text-align:center;color:var(--muted);padding:35px 10px;font-size:13px}
+.empty{padding:20px;color:var(--muted);text-align:center}
+@media(min-width:900px){
+ .sidebar{transform:none;position:sticky;height:calc(100vh - 70px);top:70px;flex-shrink:0}
+ .menu{display:none}.shade{display:none!important}
+}
+@media(max-width:600px){
+ main{padding:15px}.hero{padding:23px}.hero h1{font-size:24px}
+ .form-grid{grid-template-columns:1fr}.full{grid-column:auto}
+ header{padding:0 12px}.brand{font-size:20px}
+ .admin-item{align-items:flex-start;flex-direction:column}
+}
+</style>
+</head>
+<body>
+<header>
+ <button class="menu" id="menuToggle" aria-label="منو">☰</button>
+ <div class="brand">NSH<span>.</span>Game</div>
+ <button class="secondary" data-page="account">حساب کاربری</button>
+</header>
+
+<div class="shade" id="shade"></div>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+ <div class="brand">NSH<span>.</span>made</div>
+ <hr>
+ <button data-page="home">🏠 خانه</button>
+ <button data-page="games">🎮 همه بازی‌ها</button>
+ <button data-page="categories">🗂 دسته‌بندی‌ها</button>
+ <button data-page="account">👤 حساب کاربری</button>
+ <button data-page="admin">⚙️ مدیریت سایت</button>
+ <button data-page="about">ℹ️ درباره ما</button>
+</aside>
+
+<main>
+<section class="page active" id="home">
+ <div class="hero">
+  <h1>به NSH.Game خوش آمدی 🎮</h1>
+  <p>بازی‌ها و ابزارهای دیجیتال، همه در یک مکان.</p>
+  <button class="primary" data-page="games">مشاهده بازی‌ها</button>
+ </div>
+ <h2>بازی‌های منتخب ⭐</h2>
+ <div class="grid" id="featured"></div>
+</section>
+
+<section class="page" id="games">
+ <h2>همه بازی‌ها 🎮</h2>
+ <input id="search" placeholder="جست‌وجوی بازی...">
+ <div class="grid" id="gameList"></div>
+</section>
+
+<section class="page" id="categories">
+ <h2>دسته‌بندی‌ها</h2>
+ <div class="grid" id="categoryList"></div>
+</section>
+
+<section class="page" id="account">
+ <div class="panel" id="accountPanel"></div>
+</section>
+
+<section class="page" id="admin">
+ <h2>پنل مدیریت ⚙️</h2>
+ <div id="adminPanel"></div>
+</section>
+
+<section class="page" id="about">
+ <div class="panel">
+  <h2>درباره NSH.Game</h2>
+  <p>ساخته‌شده با NSH.made ✨</p>
+ </div>
+</section>
+<footer>© NSH.Game | NSH.made</footer>
+</main>
+</div>
+
+<div class="modal" id="gameModal">
+ <div class="modal-box">
+  <div class="modal-head">
+   <b id="modalTitle">بازی</b>
+   <button class="danger" id="closeGame">✕</button>
+  </div>
+  <div class="modal-body" id="modalBody"></div>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+const SUPABASE_URL="https://knuludqjykyijqfaolwu.supabase.co";
+const SUPABASE_KEY="sb_publishable_55TKXT3Eu20nq6SUzaDfOg_0R93DhLV";
+const BUCKET="nsh-game-files";
+
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+
+let db=null,user=null,profile=null,games=[],categories=[];
+let selectedCategory=null;
+let toastTimer=null;
+
+function notify(message){
+ const t=$("#toast");
+ t.textContent=message;t.style.display="block";
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>t.style.display="none",4000);
+}
+function safe(value=""){
+ return String(value).replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ })[c]);
+}
+function isAdmin(){return profile?.role==="admin"}
+function closeMenu(){
+ $("#sidebar").classList.remove("open");
+ $("#shade").classList.remove("show");
+ $("#menuToggle").setAttribute("aria-expanded","false");
+}
+function showPage(name){
+ $$(".page").forEach(p=>p.classList.remove("active"));
+ const page=$("#"+name);
+ if(page)page.classList.add("active");
+ closeMenu();
+ if(name==="admin")renderAdmin();
+ if(name==="account")renderAccount();
+ if(name==="games")renderGames();
+ if(name==="categories")renderCategories();
+ window.scrollTo(0,0);
+}
+$("#menuToggle").addEventListener("click",()=>{
+ const open=!$("#sidebar").classList.contains("open");
+ $("#sidebar").classList.toggle("open",open);
+ $("#shade").classList.toggle("show",open);
+ $("#menuToggle").setAttribute("aria-expanded",String(open));
+});
+$("#shade").addEventListener("click",closeMenu);
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"){closeMenu();closeGame();}
+});
+
+function categoryName(id){
+ return categories.find(c=>String(c.id)===String(id))?.name||"بدون دسته‌بندی";
+}
+
+/* تبدیل مسیر ذخیره‌سازی خصوصی به لینک موقت هنگام نمایش */
+async function displayUrl(value){
+ if(!value)return null;
+ if(/^https?:\/\//i.test(value))return value;
+ const {data,error}=await db.storage.from(BUCKET).createSignedUrl(value,3600);
+ if(error)throw error;
+ return data.signedUrl;
+}
+
+async function prepareThumbnails(items){
+ await Promise.all(items.map(async game=>{
+  game._thumbnail=null;
+  if(game.thumbnail_url){
+   try{game._thumbnail=await displayUrl(game.thumbnail_url);}
+   catch(error){console.warn("Thumbnail:",error.message);}
+  }
+ }));
+}
+
+function card(game){
+ const image=game._thumbnail||(
+  game.thumbnail_url&&/^https?:\/\//i.test(game.thumbnail_url)?game.thumbnail_url:""
+ );
+ return `
+ <article class="card">
+  <div class="thumb">
+   ${image?`<img src="${safe(image)}" alt="${safe(game.title)}">`:"🎮"}
+  </div>
+  <h3>${safe(game.title)}</h3>
+  <p>${safe(game.description||"بدون توضیحات")}</p>
+  <small>${safe(categoryName(game.category_id))}</small>
+  <div class="row" style="margin-top:13px">
+   <button class="primary" data-action="play" data-id="${safe(game.id)}">اجرای بازی</button>
+   ${isAdmin()?`<button class="secondary" data-action="edit" data-id="${safe(game.id)}">ویرایش</button>`:""}
+  </div>
+ </article>`;
+}
+function renderGames(){
+ const q=($("#search").value||"").trim().toLowerCase();
+ const list=games.filter(g=>
+  (!selectedCategory||String(g.category_id)===String(selectedCategory))&&
+  `${g.title} ${g.description||""}`.toLowerCase().includes(q)
+ );
+ $("#gameList").innerHTML=list.map(card).join("")||'<div class="empty">بازی‌ای پیدا نشد.</div>';
+}
+function renderHome(){
+ const featured=games.filter(g=>g.featured);
+ $("#featured").innerHTML=(featured.length?featured:games.slice(0,4))
+  .map(card).join("")||'<div class="empty">هنوز بازی‌ای منتشر نشده است.</div>';
+}
+function renderCategories(){
+ $("#categoryList").innerHTML=categories.map(c=>`
+  <button class="card" data-action="category" data-id="${safe(c.id)}">
+   🗂️ ${safe(c.name)}
+  </button>
+ `).join("")||'<div class="empty">دسته‌بندی موجود نیست.</div>';
+}
+
+async function loadData(){
+ const categoryRequest=db.from("categories").select("*").order("name");
+ let gameRequest=db.from("games").select("*").order("created_at",{ascending:false});
+ if(!isAdmin())gameRequest=gameRequest.eq("status","published");
+
+ const [c,g]=await Promise.all([categoryRequest,gameRequest]);
+ if(c.error)throw c.error;
+ if(g.error)throw g.error;
+
+ categories=c.data||[];
+ games=g.data||[];
+ await prepareThumbnails(games);
+ renderHome();renderGames();renderCategories();
+ if($("#adminGames"))renderAdminGames();
+}
+
+async function refreshUser(){
+ const {data,error}=await db.auth.getUser();
+ if(error)throw error;
+ user=data.user;profile=null;
+ if(user){
+  const result=await db.from("profiles").select("*")
+   .eq("id",user.id).maybeSingle();
+  if(!result.error)profile=result.data;
+ }
+}
+
+function renderAccount(){
+ if(!user){
+  $("#accountPanel").innerHTML=`
+   <h2>ورود / ثبت‌نام</h2>
+   <form id="authForm">
+    <label>ایمیل</label>
+    <input name="email" type="email" required autocomplete="email">
+    <label>رمز عبور</label>
+    <input name="password" type="password" minlength="6" required autocomplete="current-password">
+    <div class="row">
+     <button class="primary" type="submit">ورود</button>
+     <button class="secondary" type="button" id="signup">ثبت‌نام</button>
+    </div>
+   </form>`;
+ }else{
+  $("#accountPanel").innerHTML=`
+   <h2>حساب کاربری 👤</h2>
+   <p>${safe(user.email)}</p>
+   <p>${isAdmin()?"مدیر سایت":"کاربر عادی"}</p>
+   <button class="danger" data-action="logout">خروج از حساب</button>`;
+ }
+}
+
+/* آپلود فایل و ذخیره مسیر دائمی، نه لینک موقت */
+async function uploadFile(file,folder){
+ if(!file)return null;
+ if(file.size>50*1024*1024)throw Error("حداکثر حجم فایل ۵۰ مگابایت است.");
+ const cleanName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+ const path=folder+"/"+user.id+"/"+Date.now()+"-"+cleanName;
+ const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false});
+ if(error)throw error;
+ return path;
+}
+
+function renderAdmin(){
+ if(!user||!isAdmin()){
+  $("#adminPanel").innerHTML='<div class="panel">برای مدیریت باید با حساب مدیر وارد شوی.</div>';
+  return;
+ }
+
+ $("#adminPanel").innerHTML=`
+ <div class="panel">
+  <h3>➕ افزودن / ویرایش بازی</h3>
+  <div class="notice">فایل HTML یا ZIP را انتخاب کن. فایل در فضای ذخیره‌سازی خصوصی سایت قرار می‌گیرد.</div>
+  <form id="gameForm">
+   <input type="hidden" name="id">
+   <div class="form-grid">
+    <div><label>عنوان بازی</label><input name="title" required></div>
+    <div><label>دسته‌بندی</label>
+     <select name="category_id">
+      <option value="">بدون دسته‌بندی</option>
+      ${categories.map(c=>`<option value="${safe(c.id)}">${safe(c.name)}</option>`).join("")}
+     </select>
+    </div>
+    <div class="full"><label>توضیحات</label><textarea name="description"></textarea></div>
+    <div><label>نوع بازی</label>
+     <select name="game_type">
+      <option value="browser">بازی HTML</option>
+      <option value="external">لینک خارجی</option>
+      <option value="download">دانلود</option>
+     </select>
+    </div>
+    <div><label>وضعیت انتشار</label>
+     <select name="status">
+      <option value="draft">پیش‌نویس</option>
+      <option value="published">منتشرشده</option>
+      <option value="archived">بایگانی</option>
+     </select>
+    </div>
+    <div class="full"><label>آدرس بازی خارجی (در صورت نیاز)</label><input name="game_url" type="url" placeholder="https://example.com"></div>
+    <div>
+     <label>تصویر بازی</label>
+     <input name="thumbnail" type="file" accept="image/*">
+     <div class="file-name" id="thumbnailName"></div>
+    </div>
+    <div>
+     <label>فایل بازی HTML یا ZIP</label>
+     <input name="gamefile" type="file" accept=".html,.htm,.zip,text/html,application/zip">
+     <div class="file-name" id="gamefileName"></div>
+    </div>
+    <div class="full"><label><input type="checkbox" name="featured"> نمایش در بخش بازی‌های منتخب</label></div>
+   </div>
+   <div class="row">
+    <button class="primary" id="saveGameButton" type="submit">ذخیره بازی</button>
+    <button class="secondary" type="reset">پاک کردن فرم</button>
+   </div>
+  </form>
+ </div>
+ <div class="panel" style="margin-top:18px">
+  <h3>📚 بازی‌های ثبت‌شده</h3>
+  <div id="adminGames"></div>
+ </div>`;
+
+ const form=$("#gameForm");
+ form.elements.thumbnail.addEventListener("change",e=>{
+  $("#thumbnailName").textContent=e.target.files[0]?"فایل انتخاب‌شده: "+e.target.files[0].name:"";
+ });
+ form.elements.gamefile.addEventListener("change",e=>{
+  $("#gamefileName").textContent=e.target.files[0]?"فایل انتخاب‌شده: "+e.target.files[0].name:"";
+ });
+ form.addEventListener("reset",()=>{
+  setTimeout(()=>{
+   $("#thumbnailName").textContent="";
+   $("#gamefileName").textContent="";
+  },0);
+ });
+ renderAdminGames();
+}
+
+function renderAdminGames(){
+ const el=$("#adminGames");
+ if(!el)return;
+ el.innerHTML=games.map(g=>`
+  <div class="admin-item">
+   <div>
+    <strong>${safe(g.title)}</strong>
+    <span class="tag">${safe(g.status)}</span>
+   </div>
+   <div class="row">
+    <button class="secondary" data-action="edit" data-id="${safe(g.id)}">ویرایش</button>
+    <button class="danger" data-action="delete" data-id="${safe(g.id)}">حذف</button>
+   </div>
+  </div>
+ `).join("")||'<div class="empty">بازی ثبت نشده است.</div>';
+}
+
+async function saveGame(form){
+ if(!isAdmin())throw Error("دسترسی مدیر لازم است.");
+ const button=$("#saveGameButton");
+ button.disabled=true;button.textContent="در حال ذخیره...";
+
+ try{
+  const fd=new FormData(form);
+  const id=String(fd.get("id")||"");
+  const oldGame=id?games.find(g=>String(g.id)===id):null;
+
+  const payload={
+   title:String(fd.get("title")||"").trim(),
+   description:String(fd.get("description")||"").trim(),
+   category_id:fd.get("category_id")||null,
+   game_type:String(fd.get("game_type")||"browser"),
+   status:String(fd.get("status")||"draft"),
+   featured:fd.get("featured")==="on",
+   updated_at:new Date().toISOString()
+  };
+  if(!payload.title)throw Error("عنوان بازی الزامی است.");
+
+  const externalUrl=String(fd.get("game_url")||"").trim();
+  if(externalUrl)payload.game_url=externalUrl;
+  else if(!oldGame)payload.game_url=null;
+  else payload.game_url=oldGame.game_url;
+
+  const thumb=fd.get("thumbnail");
+  const gameFile=fd.get("gamefile");
+
+  if(thumb&&thumb.size){
+   if(!thumb.type.startsWith("image/"))throw Error("لطفاً یک تصویر معتبر انتخاب کن.");
+   payload.thumbnail_url=await uploadFile(thumb,"thumbnails");
+  }else if(oldGame){
+   payload.thumbnail_url=oldGame.thumbnail_url;
+  }
+
+  if(gameFile&&gameFile.size){
+   const lower=gameFile.name.toLowerCase();
+   if(!/\.(html?|zip)$/.test(lower))throw Error("فقط فایل HTML یا ZIP مجاز است.");
+   payload.game_url=await uploadFile(gameFile,"games");
+   payload.game_type=lower.endsWith(".zip")?"download":"browser";
+  }
+
+  let result;
+  if(id){
+   result=await db.from("games").update(payload).eq("id",id);
+  }else{
+   payload.created_at=new Date().toISOString();
+   result=await db.from("games").insert(payload);
+  }
+  if(result.error)throw result.error;
+
+  await loadData();
+  renderAdmin();
+  notify("بازی با موفقیت ذخیره شد. ✅");
+ }finally{
+  button.disabled=false;
+  button.textContent="ذخیره بازی";
+ }
+}
+
+function editGame(id){
+ const game=games.find(g=>String(g.id)===String(id));
+ if(!game)throw Error("بازی پیدا نشد.");
+ if(!$("#gameForm"))renderAdmin();
+ const form=$("#gameForm");
+ const set=(name,value)=>{
+  const field=form.elements.namedItem(name);
+  if(field)field.value=value??"";
+ };
+ set("id",game.id);
+ set("title",game.title);
+ set("description",game.description);
+ set("category_id",game.category_id);
+ set("game_type",game.game_type);
+ set("status",game.status);
+ set("game_url",game.game_url&&/^https?:\/\//i.test(game.game_url)?game.game_url:"");
+ const featured=form.elements.namedItem("featured");
+ if(featured)featured.checked=!!game.featured;
+ $("#gameForm").scrollIntoView({behavior:"smooth",block:"start"});
+ notify("اطلاعات بازی برای ویرایش در فرم قرار گرفت.");
+}
+
+async function deleteGame(id){
+ if(!isAdmin())throw Error("دسترسی مدیر لازم است.");
+ if(!confirm("این بازی حذف شود؟"))return;
+ const {error}=await db.from("games").delete().eq("id",id);
+ if(error)throw error;
+ await loadData();
+ renderAdmin();
+ notify("بازی حذف شد.");
+}
+
+async function playGame(id){
+ const game=games.find(g=>String(g.id)===String(id));
+ if(!game)throw Error("بازی پیدا نشد.");
+
+ $("#modalTitle").textContent=game.title;
+ $("#modalBody").innerHTML="<div class='empty'>در حال آماده‌سازی بازی...</div>";
+ $("#gameModal").classList.add("show");
+
+ try{
+  const url=await displayUrl(ga
