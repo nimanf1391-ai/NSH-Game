@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NSH.Game | دنیای بازی‌ها</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+ --bg:#f5f7ff;--white:#fff;--purple:#7856e8;--blue:#4d9df5;
+ --cyan:#32c6cf;--text:#27324b;--muted:#8490a8;
+ --border:#e8eaf3;--shadow:0 8px 28px #29345b0c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.layout{min-height:100vh;display:flex;direction:ltr}
+.sidebar{
+ width:245px;flex-shrink:0;background:white;border-right:1px solid var(--border);
+ padding:25px 16px;position:fixed;left:0;top:0;bottom:0;z-index:10;
+ display:flex;flex-direction:column;box-shadow:var(--shadow)
+}
+.brand{text-align:center;font-size:25px;font-weight:900;color:var(--purple);padding:8px 0 30px}
+.brand span{color:var(--cyan)}
+.nav-title{font-size:11px;color:#a0a8ba;padding:15px 12px 8px}
+.nav-btn{
+ width:100%;display:flex;align-items:center;gap:12px;text-align:left;
+ direction:rtl;background:transparent;border:0;color:#66718a;
+ padding:13px 14px;border-radius:12px;margin:3px 0
+}
+.nav-btn:hover,.nav-btn.active{background:#f0edff;color:var(--purple)}
+.sidebar-bottom{margin-top:auto}
+.content{direction:rtl;margin-left:245px;width:calc(100% - 245px);padding:28px;min-width:0}
+.topbar{background:white;border:1px solid var(--border);border-radius:16px;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;box-shadow:var(--shadow);margin-bottom:25px}
+.topbar h2{font-size:18px;margin:0}
+.profile-pill{background:#f2efff;color:var(--purple);border-radius:30px;padding:9px 13px;font-size:12px}
+.page{display:none}.page.active{display:block}
+.hero{background:linear-gradient(120deg,#eeeaff,#e8f8ff);border-radius:22px;padding:42px 28px;margin-bottom:22px;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(30px,5vw,48px);color:#6244d0;margin:0 0 12px}
+.hero p{color:#69748c;line-height:2;max-width:600px}
+.card{background:white;border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
+.card h3{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:17px}
+.game-card{background:white;border:1px solid var(--border);border-radius:17px;padding:12px;box-shadow:var(--shadow);overflow:hidden}
+.game-card img{width:100%;height:145px;object-fit:cover;border-radius:12px;background:#f0f2fa}
+.game-card h3{margin:12px 0 6px;font-size:16px}
+.muted{font-size:12px;color:var(--muted);line-height:1.9}
+.tag{display:inline-block;background:#f0edff;color:#7856e8;border-radius:20px;padding:5px 10px;font-size:11px;margin:5px 0}
+.btn{background:var(--purple);color:white;border:0;border-radius:11px;padding:11px 17px}
+.btn:hover{background:#6244d0}
+.btn-light{background:#f0edff;color:var(--purple);border:0;border-radius:11px;padding:11px 15px}
+.btn-danger{background:#fff0f0;color:#dc5555;border:0;border-radius:10px;padding:10px}
+input,textarea,select{
+ width:100%;padding:12px 13px;border:1px solid var(--border);border-radius:10px;
+ background:#fbfcff;color:var(--text);margin:7px 0 15px;outline:none
+}
+input:focus,textarea:focus,select:focus{border-color:var(--purple)}
+textarea{min-height:90px;resize:vertical}
+label{display:block;font-size:13px;font-weight:bold;color:#59647c}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.file-box{border:2px dashed #d9d4f5;background:#faf9ff;padding:18px;border-radius:13px;margin:8px 0 16px}
+.file-box input{border:0;background:transparent;margin:8px 0}
+.notice{background:#f0f8ff;color:#4d7ca8;padding:13px;border-radius:11px;font-size:12px;line-height:2}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:white;border:1px solid var(--border);padding:20px;border-radius:15px}
+.stat strong{display:block;font-size:25px;color:var(--purple);margin-top:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.hidden{display:none!important}
+#message{margin:12px 0;color:var(--purple);font-size:13px}
+footer{text-align:center;color:#9aa3b5;padding:30px}
+.mobile-menu{display:none}
+@media(max-width:800px){
+ .sidebar{width:75px;padding:15px 8px}
+ .brand{font-size:15px;overflow:hidden}
+ .nav-btn{justify-content:center;font-size:0;padding:14px 5px}
+ .nav-btn span{font-size:20px}
+ .nav-title{display:none}
+ .content{margin-left:75px;width:calc(100% - 75px);padding:13px}
+ .form-grid{grid-template-columns:1fr}
+ .full{grid-column:auto}
+ .topbar{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+<aside class="sidebar">
+ <div class="brand">NSH<span>.GAME</span></div>
+ <div class="nav-title">منوی اصلی</div>
+ <button class="nav-btn active" onclick="showPage('home',this)"><span>🏠</span> خانه</button>
+ <button class="nav-btn" onclick="showPage('games',this)"><span>🎮</span> بازی‌ها</button>
+ <button class="nav-btn" onclick="showPage('categories',this)"><span>📂</span> دسته‌بندی‌ها</button>
+ <div class="nav-title">حساب و اطلاعات</div>
+ <button class="nav-btn" onclick="showPage('account',this)"><span>👤</span> حساب کاربری</button>
+ <button class="nav-btn" onclick="showPage('about',this)"><span>💜</span> درباره ما</button>
+ <div id="adminMenu" class="hidden">
+  <div class="nav-title">مدیریت سایت</div>
+  <button class="nav-btn" onclick="showPage('admin',this)"><span>⚙️</span> پنل مدیریت</button>
+ </div>
+ <div class="sidebar-bottom">
+  <div class="nav-title">NSH GAME</div>
+  <div class="muted" style="text-align:center">نسخه 2.0</div>
+ </div>
+</aside>
+
+<div class="content">
+ <div class="topbar">
+  <h2 id="pageTitle">خانه</h2>
+  <div class="profile-pill" id="userStatus">بازدیدکننده</div>
+ </div>
+
+ <section id="home" class="page active">
+  <div class="hero">
+   <h1>به دنیای NSH.Game خوش آمدی! ✨</h1>
+   <p>اینجا می‌توانی بازی‌های جذاب را کشف کنی، بازی مورد علاقه‌ات را پیدا کنی و از دنیای سرگرمی لذت ببری.</p>
+   <button class="btn" onclick="showPage('games')">مشاهده بازی‌ها 🎮</button>
+  </div>
+  <div class="stats">
+   <div class="stat">🎮 بازی‌های منتشرشده<strong id="gameCount">۰</strong></div>
+   <div class="stat">📂 دسته‌بندی‌ها<strong id="categoryCount">۰</strong></div>
+  </div>
+  <div class="card">
+   <h3>⭐ بازی‌های پیشنهادی</h3>
+   <div id="featured" class="grid">در حال بارگذاری...</div>
+  </div>
+ </section>
+
+ <section id="games" class="page">
+  <div class="card">
+   <h3>🎮 مجموعه بازی‌ها</h3>
+   <input id="search" placeholder="نام بازی را جست‌وجو کن..." oninput="filterGames()">
+   <div id="gameList" class="grid">در حال بارگذاری...</div>
+  </div>
+ </section>
+
+ <section id="categories" class="page">
+  <div class="card">
+   <h3>📂 دسته‌بندی بازی‌ها</h3>
+   <div id="categoryList" class="grid">در حال بارگذاری...</div>
+  </div>
+ </section>
+
+ <section id="account" class="page">
+  <div class="card">
+   <h3>👤 حساب کاربری</h3>
+   <div id="accountInfo" class="notice">برای ورود ایمیل و رمز عبورت را وارد کن.</div>
+   <label>ایمیل</label><input id="email" type="email" placeholder="example@email.com">
+   <label>رمز عبور</label><input id="password" type="password" placeholder="حداقل ۶ کاراکتر">
+   <div class="actions">
+    <button class="btn" onclick="signIn()">ورود</button>
+    <button class="btn-light" onclick="signUp()">ساخت حساب</button>
+    <button class="btn-danger" onclick="signOut()">خروج</button>
+   </div>
+   <div id="authMessage"></div>
+  </div>
+ </section>
+
+ <section id="about" class="page">
+  <div class="card">
+   <h2>💜 درباره NSH.Game</h2>
+   <p style="line-height:2.3;color:#64718a">
+    به NSH.Game خوش آمدید! این سایت با هدف ایجاد یک فضای سرگرم‌کننده برای علاقه‌مندان به بازی‌های رایانه‌ای و تحت وب ساخته شده است.
+    <br><br>
+    در این مجموعه تلاش می‌کنیم بازی‌های متنوع، سرگرمی‌های دیجیتال و ابزارهای جذاب را در یک محیط ساده و زیبا در دسترس کاربران قرار دهیم.
+    <br><br>
+    هدف ما این است که کاربران بتوانند بازی‌های مورد علاقه خود را پیدا کنند، با تجربه‌های جدید آشنا شوند و لحظات خوبی داشته باشند.
+    <br><br>
+    NSH.Game یک پروژه در حال توسعه است و امکانات و بازی‌های آن به مرور بیشتر خواهند شد.
+   </p>
+   <div class="notice">🎮 NSH.Game؛ جایی برای کشف بازی‌ها و سرگرمی‌های دیجیتال.</div>
+  </div>
+ </section>
+
+ <section id="admin" class="page">
+  <div class="stats">
+   <div class="stat">وضعیت پنل<strong>مدیر</strong></div>
+   <div class="stat">مدیریت محتوا<strong>فعال</strong></div>
+  </div>
+
+  <div class="card">
+   <h3>➕ افزودن بازی جدید</h3>
+   <div class="form-grid">
+    <div>
+     <label>نام بازی</label>
+     <input id="gameTitle" placeholder="نام بازی">
+    </div>
+    <div>
+     <label>نام سازنده</label>
+     <input id="gameDeveloper" placeholder="نام سازنده یا شرکت">
+    </div>
+    <div class="full">
+     <label>توضیحات بازی</label>
+     <textarea id="gameDescription" placeholder="درباره این بازی بنویس..."></textarea>
+    </div>
+    <div>
+     <label>نوع بازی</label>
+     <select id="gameType" onchange="toggleGameFile()">
+      <option value="browser">بازی HTML قابل اجرا در مرورگر</option>
+      <option value="external">بازی با لینک خارجی</option>
+      <option value="download">فایل قابل دانلود</option>
+     </select>
+    </div>
+    <div>
+     <label>دسته‌بندی</label>
+     <select id="gameCategory"></select>
+    </div>
+    <div class="full">
+     <label>تصویر بازی</label>
+     <div class="file-box">
+      <p>🖼️ انتخاب تصویر از دستگاه</p>
+      <input type="file" id="imageFile" accept="image/*">
+      <small class="muted">فرمت‌های تصویری مانند PNG و JPG</small>
+     </div>
+    </div>
+    <div class="full" id="htmlUpload">
+     <label>فایل HTML بازی</label>
+     <div class="file-box">
+      <p>📄 انتخاب فایل HTML بازی</p>
+      <input type="file" id="htmlFile" accept=".html,.htm,text/html">
+      <small class="muted">فایل اصلی بازی با پسوند html یا htm</small>
+     </div>
+    </div>
+    <div class="full hidden" id="urlBox">
+     <label>آدرس بازی یا فایل</label>
+     <input id="gameUrl" placeholder="https://example.com/game">
+    </div>
+    <div>
+     <label>وضعیت انتشار</label>
+     <select id="gameStatus">
+      <option value="published">منتشر شود</option>
+      <option value="draft">پیش‌نویس</option>
+     </select>
+    </div>
+    <div>
+     <label>بازی ویژه باشد؟</label>
+     <select id="gameFeatured">
+      <option value="false">خیر</option>
+      <option value="true">بله</option>
+     </select>
+    </div>
+   </div>
+   <button class="btn" onclick="addGame()">ثبت بازی در سایت</button>
+   <div id="adminMessage"></div>
+  </div>
+
+  <div class="card">
+   <h3>📋 مدیریت بازی‌ها</h3>
+   <div id="adminGames" class="grid">در حال بارگذاری...</div>
+  </div>
+
+  <div class="card">
+   <h3>📂 افزودن دسته‌بندی</h3>
+   <label>نام دسته‌بندی جدید</label>
+   <input id="categoryName" placeholder="مثلاً بازی‌های ماجراجویی">
+   <button class="btn" onclick="addCategory()">ثبت دسته‌بندی</button>
+   <div id="categoryMessage"></div>
+  </div>
+ </section>
+
+ <footer>© NSH.Game | تمام حقوق محفوظ است</footer>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL="https://knuludqjykyijqfaolwu.supabase.co";
+const SUPABASE_KEY="sb_publishable_55TKXT3Eu20nq6SUzaDfOg_0R93DhLV";
+const BUCKET="nsh-game-files";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null,isAdmin=false,games=[],categories=[];
+
+function msg(id,text){document.getElementById(id).textContent=text}
+function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function slugify(s){return s.trim().toLowerCase().replace(/\s+/g,'-')+'-'+Date.now().toString().slice(-6)}
+
+function showPage(id,button){
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+ if(button)button.classList.add('active');
+ const names={home:'خانه',games:'بازی‌ها',categories:'دسته‌بندی‌ها',account:'حساب کاربری',about:'درباره ما',admin:'پنل مدیریت'};
+ document.getElementById('pageTitle').textContent=names[id]||'NSH.Game';
+ if(id==='games')loadGames();
+ if(id==='categories')loadCategories();
+ if(id==='admin')loadAdmin();
+ window.scrollTo(0,0);
+}
+
+function toggleGameFile(){
+ const type=document.getElementById('gameType').value;
+ document.getElementById('htmlUpload').classList.toggle('hidden',type!=='browser');
+ document.getElementById('urlBox').classList.toggle('hidden',type==='browser');
+}
+
+async function signUp(){
+ const email=document.getElementById('email').value.trim();
+ const password=document.getElementById('password').value;
+ if(!email||password.length<6){msg('authMessage','ایمیل و رمز حداقل ۶ کاراکتری وارد کن.');return}
+ const {error}=await db.auth.signUp({email,password});
+ msg('authMessage',error?'خطا: '+error.message:'حساب ساخته شد. در صورت درخواست، ایمیلت را تأیید کن.');
+}
+
+async function signIn(){
+ const email=document.getElementById('email').value.trim();
+ const password=document.getElementById('password').value;
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){msg('authMessage','خطا: '+error.message);return}
+ currentUser=data.user;
+ await checkAdmin();updateAccount();
+ msg('authMessage','با موفقیت وارد شدی.');
+}
+
+async function signOut(){
+ await db.auth.signOut();
+ currentUser=null;isAdmin=false;updateAccount();
+ msg('authMessage','از حساب خارج شدی.');
+ showPage('home');
+}
+
+async function checkAdmin(){
+ isAdmin=false;
+ if(currentUser){
+  const {data,error}=await db.from('profiles').select('role').eq('id',currentUser.id).maybeSingle();
+  if(!error&&data?.role==='admin')isAdmin=true;
+ }
+ document.getElementById('adminMenu').classList.toggle('hidden',!isAdmin);
+}
+
+function updateAccount(){
+ document.getElementById('userStatus').textContent=currentUser?(isAdmin?'مدیر سایت':'کاربر واردشده'):'بازدیدکننده';
+ document.getElementById('accountInfo').textContent=currentUser?
+ 'وارد شده با ایمیل: '+currentUser.email+(isAdmin?' | دسترسی مدیر فعال است.':''):
+ 'برای ورود ایمیل و رمز عبورت را وارد کن.';
+ document.getElementById('adminMenu').classList.toggle('hidden',!isAdmin);
+}
+
+async function uploadFile(file,folder){
+ if(!file)return null;
+ const ext=file.name.split('.').pop().toLowerCase();
+ const path=folder+'/'+currentUser.id+'/'+Date.now()+'-'+crypto.randomUUID()+'.'+ext;
+ const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false,contentType:file.type||'application/octet-stream'});
+ if(error)throw error;
+ return path;
+}
+
+async function signedFile(path){
+ if(!path)return null;
+ if(path.startsWith('http://')||path.startsWith('https://'))return path;
+ const {data,error}=await db.storage.from(BUCKET).createSignedUrl(path,3600);
+ if(error){console.warn(error.message);return null}
+ return data.signedUrl;
+}
+
+async function loadCategories(){
+ const {data,error}=await db.from('categories').select('id,name,slug').order('name');
+ if(error){document.getElementById('categoryList').textContent=error.message;return}
+ categories=data||[];
+ document.getElementById('categoryCount').textContent=categories.length;
+ document.getElementById('categoryList').innerHTML=categories.map(c=>`
+ <div class="game-card"><h3>📁 ${safe(c.name)}</h3>
+ <button class="btn-light" onclick="showCategory('${c.id}')">مشاهده بازی‌ها</button></div>`).join('')||'هنوز دسته‌بندی وجود ندارد.';
+ document.getElementById('gameCategory').innerHTML=categories.map(c=>`<option value="${c.id}">${safe(c.name)}</option>`).join('');
+}
+
+async function loadGames(){
+ const {data,error}=await db.from('games')
+ .select('id,title,description,thumbnail_url,game_url,game_type,category_id,status,featured,developer,created_at')
+ .eq('status','published').order('created_at',{ascending:false});
+ if(error){document.getElementById('gameList').textContent=error.message;return}
+ games=data||[];
+ document.getElementById('gameCount').textContent=games.length;
+ await renderGames(games,'gameList');
+ await renderGames(games.filter(g=>g.featured).slice(0,4),'featured');
+}
+
+async function renderGames(items,target){
+ const cards=await Promise.all(items.map(async g=>{
+  const image=await signedFile(g.thumbnail_url);
+  return `<article class="game-card">
+   ${image?`<img src="${safe(image)}" alt="${safe(g.title)}">`:'<div style="height:100px;background:#f1efff;border-radius:12px;display:grid;place-items:center">🎮</div>'}
+   <h3>${safe(g.title)}</h3>
+   <div class="muted">سازنده: ${safe(g.developer||'نامشخص')}</div>
+   <p class="muted">${safe(g.description||'بدون توضیحات')}</p>
+   <span class="tag">${g.game_type==='browser'?'بازی مرورگری':g.game_type==='external'?'لینک خارجی':'دانلودی'}</span>
+   <br><button class="btn" onclick="openGame('${g.id}')">${g.game_type==='download'?'دانلود بازی':'اجرای بازی'}</button>
+  </article>`;
+ }));
+ document.getElementById(target).innerHTML=cards.join('')||'<p class="muted">هنوز بازی منتشر نشده است.</p>';
+}
+
+function filterGames(){
+ const q=document.getElementById('search').value.toLowerCase();
+ renderGames(games.filter(g=>(g.title||'').toLowerCase().includes(q)),'gameList');
+}
+
+async function showCategory(id){
+ showPage('games');
+ const {data,error}=await db.from('games').select('id,title,description,thumbnail_url,game_url,game_type,category_id,status,featured,developer').eq('category_id',id).eq('status','published');
+ if(error){msg('gameList',error.message);return}
+ await renderGames(data||[],'gameList');
+}
+
+async function openGame(id){
+ const game=games.find(g=>g.id===id);
+ if(!game)return;
+ let url=game.game_url;
+ if(game.game_type==='browser'&&!url){alert('فایل HTML بازی ثبت نشده است.');return}
+ if(game.game_type==='browser'&&!url.startsWith('http'))url=await signedFile(url);
+ if(!url){alert('فایل در دسترس نیست.');return}
+ window.open(url,'_blank','noopener');
+}
+
+async function addGame(){
+ if(!isAdmin){msg('adminMessage','فقط مدیر می‌تواند بازی اضافه کند.');return}
+ const title=document.getElementById('gameTitle').value.trim();
+ const type=document.getElementById('gameType').value;
+ const imageFile=document.getElementById('imageFile').files[0];
+ const htmlFile=document.getElementById('htmlFile').files[0];
+ const externalUrl=document.getElementById('gameUrl').value.trim();
+ if(!title){msg('adminMessage','نام بازی را وارد کن.');return}
+ if(type==='browser'&&(!htmlFile||!htmlFile.name.match(/\.html?$/i))){msg('adminMessage','یک فایل HTML انتخاب کن.');return}
+ if(type!=='browser'&&!externalUrl){msg('adminMessage','آدرس بازی را وارد کن.');return}
+ try{
+  msg('adminMessage','در حال آپلود فایل‌ها...');
+  const imagePath=imageFile?await uploadFile(imageFile,'images'):null;
+  const htmlPath=type==='browser'?await uploadFile(htmlFile,'games'):null;
+  const row={
+   title,slug:slugify(title),
+   description:document.getElementById('gameDescription').value,
+   developer:document.getElementById('gameDeveloper').value.trim(),
+   thumbnail_url:imagePath,
+   game_url:type==='browser'?htmlPath:externalUrl,
+   game_type:type,
+   category_id:document.getElementById('gameCategory').value||null,
+   status:document.getElementById('gameStatus').value,
+   featured:document.getElementById('gameFeatured').value==='true'
+  };
+  const {error}=await db.from('games').insert(row);
+  if(error)throw error;
+  msg('adminMessage','بازی با موفقیت ثبت شد! 🎉');
+  ['gameTitle','gameDeveloper','gameDescription','gameUrl'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('imageFile').value='';
+  document.getElementById('htmlFile').value='';
+  await loadGames();await loadAdmin();
+ }catch(e){msg('adminMessage','خطا: '+e.message)}
+}
+
+async function addCategory(){
+ if(!isAdmin){msg('categoryMessage','دسترسی مدیر لازم است.');return}
+ const name=document.getElementById('categoryName').value.trim();
+ if(!name)return;
+ const {error}=await db.from('categories').insert({name,slug:slugify(name)});
+ msg('categoryMessage',error?'خطا: '+error.message:'دسته‌بندی اضافه شد.');
+ if(!error){document.getElementBy
