@@ -1,0 +1,660 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NSH.Game | دنیای بازی‌ها</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --p:#7138d8;--p2:#8d5be8;--bg:#f7f5fc;
+  --text:#241c32;--muted:#777184;--line:#e9e3f3;
+  --white:#fff;--red:#c33;--green:#21834c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:11px;padding:11px 16px}
+button:disabled{opacity:.55;cursor:not-allowed}
+.primary{background:var(--p);color:white}
+.secondary{background:#f0eaff;color:var(--p)}
+.danger{background:#ffe8e8;color:var(--red)}
+header{
+  position:sticky;top:0;z-index:5;background:white;
+  border-bottom:1px solid var(--line);padding:14px 5%;
+  display:flex;justify-content:space-between;align-items:center;gap:12px
+}
+.logo{font-size:24px;font-weight:bold;color:var(--p)}
+nav{display:flex;gap:7px;flex-wrap:wrap}
+.container{width:min(1100px,92%);margin:25px auto}
+.hero{
+  padding:38px 25px;border-radius:22px;color:white;
+  background:linear-gradient(120deg,#7138d8,#a27bea);
+  margin-bottom:25px
+}
+.hero h1{font-size:30px;margin:0 0 12px}
+.hero p{line-height:2;margin:0}
+.section-title{font-size:21px;margin:28px 0 15px}
+.games{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.card,.panel{
+  background:white;border:1px solid var(--line);border-radius:16px;
+  padding:16px;box-shadow:0 4px 18px #29105c08
+}
+.game-image{width:100%;height:145px;object-fit:cover;border-radius:12px;background:#eee8fa}
+.card h3{margin:12px 0 7px}
+.muted{color:var(--muted);font-size:13px;line-height:1.9}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:14px;margin-bottom:7px}
+input,textarea,select{
+  width:100%;padding:12px;border:1px solid var(--line);
+  border-radius:10px;background:white;outline:none
+}
+input:focus,textarea:focus,select:focus{border-color:var(--p)}
+textarea{min-height:100px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.notice{padding:13px;border-radius:11px;background:#f0eaff;color:#5830a7;line-height:1.9;margin:12px 0}
+.hidden{display:none!important}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item{padding:15px 0;border-bottom:1px solid var(--line)}
+#message,#authMessage,#submitMessage{line-height:1.9;margin-top:10px}
+.modal{position:fixed;inset:0;background:#160b2c99;z-index:10;display:flex;align-items:center;justify-content:center;padding:15px}
+.modal-box{background:white;width:min(440px,100%);padding:22px;border-radius:18px;max-height:90vh;overflow:auto}
+.modal-box h2{margin-top:0}
+.game-frame{width:100%;height:75vh;border:0;border-radius:12px;background:white}
+footer{text-align:center;color:var(--muted);padding:30px}
+a{color:var(--p)}
+@media(max-width:600px){
+ header{align-items:flex-start;flex-direction:column}
+ .form-grid{grid-template-columns:1fr}
+ .full{grid-column:auto}
+ .hero h1{font-size:24px}
+ nav button{padding:9px 11px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NSH.Game</div>
+  <nav>
+    <button class="secondary" onclick="showPage('home')">خانه</button>
+    <button class="secondary" onclick="showPage('submit')">ارسال بازی</button>
+    <button class="secondary hidden" id="adminNav" onclick="showPage('admin')">مدیریت</button>
+    <button class="primary" id="loginNav" onclick="openAuth()">ورود / ثبت‌نام</button>
+    <button class="danger hidden" id="logoutNav" onclick="logout()">خروج</button>
+  </nav>
+</header>
+
+<main class="container">
+
+<section id="homePage">
+  <div class="hero">
+    <h1>به NSH.Game خوش آمدی!</h1>
+    <p>بازی‌های جذاب را پیدا کن، بازی کن و بازی خودت را برای ما بفرست.</p>
+    <button style="background:white;color:#7138d8;margin-top:18px" onclick="showPage('submit')">ارسال بازی من</button>
+  </div>
+  <h2 class="section-title">بازی‌های منتشرشده</h2>
+  <div id="gamesList" class="games">در حال بارگذاری...</div>
+</section>
+
+<section id="submitPage" class="hidden">
+  <h2 class="section-title">ارسال بازی</h2>
+  <div class="panel">
+    <div class="notice">برای ارسال بازی باید وارد حساب کاربری‌ات شده باشی. درخواستت پس از ارسال توسط مدیر بررسی می‌شود.</div>
+    <form id="submitForm">
+      <div class="form-grid">
+        <div class="field">
+          <label>نام بازی</label>
+          <input name="title" required maxlength="100">
+        </div>
+        <div class="field">
+          <label>نام سازنده</label>
+          <input name="developer" maxlength="100">
+        </div>
+        <div class="field">
+          <label>نوع بازی</label>
+          <select name="game_type">
+            <option value="browser">تحت وب</option>
+            <option value="external">لینک خارجی</option>
+            <option value="download">دانلودی</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>شناسه دسته‌بندی (اختیاری)</label>
+          <input name="category_id" placeholder="UUID دسته‌بندی">
+        </div>
+        <div class="field full">
+          <label>توضیحات</label>
+          <textarea name="description" maxlength="3000"></textarea>
+        </div>
+        <div class="field full">
+          <label>لینک بازی (در صورت داشتن)</label>
+          <input name="game_url" type="url" placeholder="https://example.com">
+        </div>
+        <div class="field">
+          <label>فایل بازی (اختیاری)</label>
+          <input name="game_file" type="file">
+        </div>
+        <div class="field">
+          <label>تصویر بازی (اختیاری)</label>
+          <input name="thumbnail_file" type="file" accept="image/*">
+        </div>
+      </div>
+      <button class="primary" type="submit" id="submitButton">ثبت درخواست بازی</button>
+      <div id="submitMessage"></div>
+    </form>
+  </div>
+</section>
+
+<section id="adminPage" class="hidden">
+  <h2 class="section-title">پنل مدیریت درخواست‌ها</h2>
+  <div class="panel">
+    <div id="adminList">در حال بارگذاری درخواست‌ها...</div>
+  </div>
+</section>
+
+</main>
+
+<footer>NSH.Game</footer>
+
+<div class="modal hidden" id="authModal">
+  <div class="modal-box">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="authTitle">ورود به حساب</h2>
+      <button class="secondary" type="button" onclick="closeAuth()">✕</button>
+    </div>
+    <form id="authForm">
+      <div class="field">
+        <label>ایمیل</label>
+        <input name="email" type="email" required>
+      </div>
+      <div class="field">
+        <label>رمز عبور</label>
+        <input name="password" type="password" required minlength="6">
+      </div>
+      <div class="field hidden" id="usernameField">
+        <label>نام کاربری</label>
+        <input name="username" maxlength="40">
+      </div>
+      <button class="primary" type="submit" id="authSubmit">ورود</button>
+      <button class="secondary" type="button" onclick="toggleAuthMode()" id="modeButton">ساخت حساب جدید</button>
+      <div id="authMessage"></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal hidden" id="gameModal">
+  <div class="modal-box" style="width:min(1000px,100%)">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="gameModalTitle">بازی</h2>
+      <button class="secondary" type="button" onclick="closeGame()">بستن</button>
+    </div>
+    <div id="gameModalBody"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://knuludqjykyijqfaolwu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_55TKXT3Eu20nq6SUzaDfOg_0R93DhLV";
+const BUCKET = "nsh-game-files";
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+let signupMode = false;
+
+const $ = id => document.getElementById(id);
+
+function say(id,text,error=false){
+  const el=$(id);
+  el.textContent=text;
+  el.style.color=error?"#c33":"#21834c";
+}
+
+function showPage(page){
+  ["homePage","submitPage","adminPage"].forEach(id=>$(id).classList.add("hidden"));
+  $(page+"Page").classList.remove("hidden");
+  if(page==="admin") loadSubmissions();
+}
+
+function openAuth(){ $("authModal").classList.remove("hidden"); }
+function closeAuth(){ $("authModal").classList.add("hidden"); }
+
+function toggleAuthMode(){
+  signupMode=!signupMode;
+  $("authTitle").textContent=signupMode?"ساخت حساب":"ورود به حساب";
+  $("authSubmit").textContent=signupMode?"ثبت‌نام":"ورود";
+  $("modeButton").textContent=signupMode?"قبلاً حساب دارم":"ساخت حساب جدید";
+  $("usernameField").classList.toggle("hidden",!signupMode);
+  say("authMessage","");
+}
+
+function updateHeader(){
+  const logged=!!currentUser;
+  $("loginNav").classList.toggle("hidden",logged);
+  $("logoutNav").classList.toggle("hidden",!logged);
+  $("adminNav").classList.toggle("hidden",currentProfile?.role!=="admin");
+}
+
+async function refreshUser(){
+  const {data:{user}}=await db.auth.getUser();
+  currentUser=user;
+  currentProfile=null;
+
+  if(user){
+    const {data,error}=await db.from("profiles")
+      .select("id,username,display_name,role,is_banned")
+      .eq("id",user.id).maybeSingle();
+
+    if(!error) currentProfile=data;
+
+    if(currentProfile?.is_banned){
+      await db.auth.signOut();
+      currentUser=null;
+      currentProfile=null;
+      alert("حساب شما مسدود شده است.");
+    }
+  }
+  updateHeader();
+}
+
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const email=f.get("email").trim();
+  const password=f.get("password");
+  $("authSubmit").disabled=true;
+  say("authMessage","لطفاً صبر کن...");
+
+  try{
+    if(signupMode){
+      const username=(f.get("username")||"").trim();
+      const {error}=await db.auth.signUp({
+        email,password,
+        options:{data:{username}}
+      });
+      if(error) throw error;
+      say("authMessage","ثبت‌نام انجام شد. اگر تأیید ایمیل فعال است، ایمیلت را بررسی کن.");
+    }else{
+      const {error}=await db.auth.signInWithPassword({email,password});
+      if(error) throw error;
+      await refreshUser();
+      closeAuth();
+      e.target.reset();
+      showPage("home");
+    }
+  }catch(err){
+    say("authMessage",err.message,true);
+  }finally{
+    $("authSubmit").disabled=false;
+  }
+});
+
+async function logout(){
+  await db.auth.signOut();
+  await refreshUser();
+  showPage("home");
+}
+
+function safeUrl(value){
+  try{
+    const u=new URL(value);
+    return ["http:","https:"].includes(u.protocol)?u.href:null;
+  }catch{return null}
+}
+
+async function loadGames(){
+  const box=$("gamesList");
+  box.textContent="در حال بارگذاری بازی‌ها...";
+
+  const {data,error}=await db.from("games")
+    .select("id,title,slug,description,thumbnail_url,game_url,game_type,developer")
+    .eq("status","published")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    box.textContent="خطا در دریافت بازی‌ها: "+error.message;
+    return;
+  }
+
+  box.innerHTML="";
+  if(!data?.length){
+    box.textContent="هنوز بازی‌ای منتشر نشده است.";
+    return;
+  }
+
+  data.forEach(game=>{
+    const card=document.createElement("article");
+    card.className="card";
+
+    const img=document.createElement("img");
+    img.className="game-image";
+    img.alt=game.title||"تصویر بازی";
+    img.src=safeUrl(game.thumbnail_url)||"";
+    card.appendChild(img);
+
+    const title=document.createElement("h3");
+    title.textContent=game.title;
+    card.appendChild(title);
+
+    const desc=document.createElement("p");
+    desc.className="muted";
+    desc.textContent=game.description||"";
+    card.appendChild(desc);
+
+    const dev=document.createElement("p");
+    dev.className="muted";
+    dev.textContent=game.developer?"سازنده: "+game.developer:"";
+    card.appendChild(dev);
+
+    const play=document.createElement("button");
+    play.className="primary";
+    play.type="button";
+    play.textContent=game.game_type==="download"?"دانلود / مشاهده":"اجرای بازی";
+    play.onclick=()=>openGame(game);
+    card.appendChild(play);
+
+    box.appendChild(card);
+  });
+}
+
+function openGame(game){
+  const url=safeUrl(game.game_url);
+  if(!url){
+    alert("لینک این بازی معتبر نیست یا ثبت نشده است.");
+    return;
+  }
+
+  $("gameModalTitle").textContent=game.title;
+  const body=$("gameModalBody");
+  body.innerHTML="";
+
+  if(game.game_type==="browser"){
+    const frame=document.createElement("iframe");
+    frame.className="game-frame";
+    frame.src=url;
+    frame.allowFullscreen=true;
+    frame.referrerPolicy="no-referrer";
+    body.appendChild(frame);
+  }else{
+    const link=document.createElement("a");
+    link.href=url;
+    link.target="_blank";
+    link.rel="noopener noreferrer";
+    link.textContent=game.game_type==="download"?"دانلود بازی":"باز کردن بازی";
+    link.className="primary";
+    link.style.display="inline-block";
+    link.style.padding="13px 20px";
+    body.appendChild(link);
+  }
+
+  $("gameModal").classList.remove("hidden");
+}
+
+function closeGame(){
+  $("gameModal").classList.add("hidden");
+  $("gameModalBody").innerHTML="";
+}
+
+function cleanName(name){
+  return name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-90);
+}
+
+async function uploadFile(file,folder,userId){
+  if(!file || !file.size) return null;
+  if(file.size>50*1024*1024) throw new Error("حجم فایل نباید بیشتر از ۵۰ مگابایت باشد.");
+
+  const path=`submissions/${folder}/${userId}/${Date.now()}-${cleanName(file.name)}`;
+  const {error}=await db.storage.from(BUCKET).upload(path,file,{upsert:false});
+  if(error) throw error;
+  return "storage://"+path;
+}
+
+$("submitForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+
+  if(!currentUser){
+    openAuth();
+    say("submitMessage","ابتدا وارد حساب کاربری شو.",true);
+    return;
+  }
+
+  const form=e.target;
+  const f=new FormData(form);
+  const button=$("submitButton");
+  button.disabled=true;
+  say("submitMessage","در حال ارسال درخواست...");
+
+  try{
+    const gameFile=f.get("game_file");
+    const thumbFile=f.get("thumbnail_file");
+
+    const gamePath=gameFile?.size
+      ?await uploadFile(gameFile,"games",currentUser.id):null;
+
+    const thumbPath=thumbFile?.size
+      ?await uploadFile(thumbFile,"thumbnails",currentUser.id):null;
+
+    const gameUrl=(f.get("game_url")||"").trim()||gamePath;
+
+    const record={
+      user_id:currentUser.id,
+      title:f.get("title").trim(),
+      developer:f.get("developer")||null,
+      description:f.get("description")||null,
+      category_id:f.get("category_id")||null,
+      game_type:f.get("game_type"),
+      game_url:gameUrl,
+      thumbnail_url:thumbPath,
+      status:"pending"
+    };
+
+    const {error}=await db.from("game_submissions").insert(record);
+    if(error) throw error;
+
+    form.reset();
+    say("submitMessage","درخواستت با موفقیت ثبت شد و منتظر بررسی مدیر است.");
+  }catch(err){
+    say("submitMessage",err.message,true);
+  }finally{
+    button.disabled=false;
+  }
+});
+
+function storagePath(value){
+  return value?.startsWith("storage://")?value.slice(10):null;
+}
+
+async function publishFile(value,destination,id){
+  const oldPath=storagePath(value);
+  if(!oldPath) return value||null;
+
+  const fileName=oldPath.split("/").pop();
+  const newPath=destination+"/"+id+"-"+fileName;
+
+  const {error}=await db.storage.from(BUCKET).move(oldPath,newPath);
+  if(error) throw error;
+
+  return db.storage.from(BUCKET).getPublicUrl(newPath).data.publicUrl;
+}
+
+async function loadSubmissions(){
+  if(currentProfile?.role!=="admin"){
+    $("adminList").textContent="دسترسی مجاز نیست.";
+    return;
+  }
+
+  $("adminList").textContent="در حال دریافت درخواست‌ها...";
+
+  const {data,error}=await db.from("game_submissions")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    $("adminList").textContent="خطا: "+error.message;
+    return;
+  }
+
+  const box=$("adminList");
+  box.innerHTML="";
+
+  if(!data?.length){
+    box.textContent="درخواستی وجود ندارد.";
+    return;
+  }
+
+  data.forEach(item=>{
+    const div=document.createElement("div");
+    div.className="item";
+
+    const title=document.createElement("h3");
+    title.textContent=item.title;
+    div.appendChild(title);
+
+    const details=document.createElement("p");
+    details.className="muted";
+    details.textContent=
+      "سازنده: "+(item.developer||"نامشخص")+
+      " | نوع: "+item.game_type+
+      " | وضعیت: "+item.status;
+    div.appendChild(details);
+
+    const desc=document.createElement("p");
+    desc.textContent=item.description||"بدون توضیحات";
+    div.appendChild(desc);
+
+    if(item.game_url && safeUrl(item.game_url)){
+      const a=document.createElement("a");
+      a.href=safeUrl(item.game_url);
+      a.target="_blank";
+      a.rel="noopener noreferrer";
+      a.textContent="مشاهده لینک بازی";
+      div.appendChild(a);
+    }
+
+    if(item.status==="pending"){
+      const actions=document.createElement("div");
+      actions.className="row";
+
+      const yes=document.createElement("button");
+      yes.className="primary";
+      yes.type="button";
+      yes.textContent="تأیید و انتشار";
+      yes.onclick=()=>reviewSubmission(item.id,"approved");
+
+      const no=document.createElement("button");
+      no.className="danger";
+      no.type="button";
+      no.textContent="رد درخواست";
+      no.onclick=()=>reviewSubmission(item.id,"rejected");
+
+      actions.append(yes,no);
+      div.appendChild(actions);
+    }
+
+    box.appendChild(div);
+  });
+}
+
+async function reviewSubmission(id,status){
+  if(currentProfile?.role!=="admin") return;
+
+  const note=prompt("توضیح مدیر (اختیاری):")||"";
+
+  try{
+    const {data:item,error:readError}=await db.from("game_submissions")
+      .select("*").eq("id",id).single();
+
+    if(readError) throw readError;
+    if(item.status!=="pending") throw new Error("این درخواست قبلاً بررسی شده است.");
+
+    if(status==="rejected"){
+      const {error}=await db.from("game_submissions").update({
+        status:"rejected",
+        review_note:note,
+        reviewed_by:currentUser.id,
+        reviewed_at:new Date().toISOString()
+      }).eq("id",id);
+
+      if(error) throw error;
+      alert("درخواست رد شد.");
+      await loadSubmissions();
+      return;
+    }
+
+    const gameId=crypto.randomUUID();
+    const base=(item.title||"game")
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"-")
+      .replace(/^-|-$/g,"")
+      .slice(0,45);
+
+    const slug=(base||"game")+"-"+gameId.slice(0,8);
+
+    const thumbnail=await publishFile(item.thumbnail_url,"thumbnails",gameId);
+    const gameUrl=await publishFile(item.game_url,"games",gameId);
+
+    const categoryId=item.category_id &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.category_id)
+      ?item.category_id:null;
+
+    const {error:insertError}=await db.from("games").insert({
+      id:gameId,
+      title:item.title,
+      slug,
+      description:item.description,
+      thumbnail_url:thumbnail,
+      game_url:gameUrl,
+      category_id:categoryId,
+      game_type:item.game_type,
+      status:"published",
+      featured:false,
+      developer:item.developer,
+      version:"1.0.0",
+      sort_order:0,
+      views:0,
+      downloads:0
+    });
+
+    if(insertError) throw insertError;
+
+    const {error:updateError}=await db.from("game_submissions").update({
+      status:"approved",
+      review_note:note,
+      reviewed_by:currentUser.id,
+      reviewed_at:new Date().toISOString()
+    }).eq("id",id);
+
+    if(updateError){
+      alert("بازی منتشر شد اما وضعیت درخواست تغییر نکرد: "+updateError.message);
+    }else{
+      alert("بازی با موفقیت منتشر شد!");
+    }
+
+    await loadSubmissions();
+    await loadGames();
+
+  }catch(err){
+    alert("خطا در عملیات: "+err.message);
+  }
+}
+
+db.auth.onAuthStateChange(()=>{
+  setTimeout(async()=>{
+    await refreshUser();
+  },0);
+});
+
+(async()=>{
+  await refreshUser();
+  await loadGames();
+})();
+</script>
+</body>
+  </html>
+  
